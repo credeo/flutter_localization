@@ -4,11 +4,13 @@ A different way of localizing apps
 
 ## Getting Started
 
-This project is a starting point for a Dart
-[package](https://flutter.dev/developing-packages/),
-a library module containing code that can be shared easily across
-multiple Flutter or Dart projects.
+Read description in FlutterLocalization
 
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+## Installation
+
+Add to dependencies in pubspec.yaml:
+
+flutter_localization:
+    git:
+      url: git://github.com/credeo/flutter_localization.git
+      ref: (tag_version)
