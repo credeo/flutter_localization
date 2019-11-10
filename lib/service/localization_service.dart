@@ -128,7 +128,7 @@ class LocalizationService extends ChangeNotifier {
       MarkdownFile file = _settings.markdownFiles
           .firstWhere((file) => (file.name == name) && (file.language == getCurrentLanguageCode()), orElse: () => null);
       if (file == null) {
-        print('Markdown file: ${file.name} not found for language ${getCurrentLanguageCode()}. Fallback to default language');
+        print('Markdown file: $name not found for language ${getCurrentLanguageCode()}. Fallback to default language');
         file = _settings.markdownFiles.firstWhere(
             (file) => (file.name == name) && (file.language == _settings.supportedLanguages[0]),
             orElse: () => null);
@@ -137,7 +137,7 @@ class LocalizationService extends ChangeNotifier {
         String markdown = await rootBundle.loadString(file.localAssetsPath);
         return markdown;
       } else {
-        print('Markdown file: ${file.name} not found');
+        print('Markdown file: $name not found');
         return null;
       }
     } else {
