@@ -93,3 +93,8 @@ Future<String> getMarkdownFile(String name) async {
   assert(FlutterLocalization._localizationSettings != null, 'FlutterLocalization.init not called');
   return await _localizationService.getMarkdownFile(name);
 }
+
+String getCurrentLocalizationCode() {
+  assert(FlutterLocalization._localizationSettings != null, 'FlutterLocalization.init not called');
+  return _localizationService.getCurrentLanguageCode();
+}
