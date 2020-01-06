@@ -10,6 +10,7 @@ import 'package:flutter_localization/service/network_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kiwi/kiwi.dart' as kiwi;
+import 'package:devicelocale/devicelocale.dart';
 
 class LocalizationService extends ChangeNotifier {
   NetworkService _networkService = kiwi.Container().resolve<NetworkService>();
@@ -32,7 +33,12 @@ class LocalizationService extends ChangeNotifier {
   List<String> getSupportedLanguages() => _settings.supportedLanguages;
 
   Future<void> init() async {
-    String appLanguageCode = window.locale?.languageCode;
+    String appLanguageCode = await Devicelocale.currentLocale;
+    if (appLanguageCode.contains('-')) {
+      appLanguageCode = appLanguageCode.split('-')[0];
+    } else {
+      appLanguageCode = appLanguageCode.split('_')[0];
+    }
 
     if (appLanguageCode != null) {
       _languageCode = _settings.supportedLanguages.firstWhere(
@@ -42,7 +48,7 @@ class LocalizationService extends ChangeNotifier {
       _languageCode = _settings.supportedLanguages[0];
     }
 
-    print('_languageCode is: $_languageCode');
+    print('FlutterLocalization: currentLanguageCode is "$_languageCode"');
 
     await _getCurrentLocalization();
   }
