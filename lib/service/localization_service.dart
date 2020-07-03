@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter_localization/model/localization_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
-import 'package:flutter_localization/model/markdown_file.dart';
+import 'package:flutter_localization/model/local_file.dart';
 import 'package:flutter_localization/service/file_service.dart';
+import 'package:flutter_localization/service/graphql_service.dart';
 import 'package:flutter_localization/service/network_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,21 +13,17 @@ import 'package:kiwi/kiwi.dart' as kiwi;
 import 'package:devicelocale/devicelocale.dart';
 
 class LocalizationService extends ChangeNotifier {
-  NetworkService _networkService = kiwi.Container().resolve<NetworkService>();
-  FileService _fileService = kiwi.Container().resolve<FileService>();
+  final NetworkService _networkService = kiwi.Container().resolve<NetworkService>();
+  final GraphQLService _graphQLService = kiwi.Container().resolve<GraphQLService>();
+  final FileService _fileService = kiwi.Container().resolve<FileService>();
 
   final LocalizationSettings _settings;
   String _languageCode;
   Map<String, LocalizedString> localizationStrings = {};
-  String _currentLocalizationVersion;
 
   LocalizationService({
     LocalizationSettings settings,
-  })  : assert(settings.supportedLanguages != null && settings.supportedLanguages.length > 0,
-            'Supported languages cannot be empty'),
-        assert(settings.localizationJsonPath != null, 'Localization json path cannot be null'),
-        _settings = settings,
-        _currentLocalizationVersion = settings.initialLocalizationVersion;
+  }) : _settings = settings;
 
   String getDefaultLanguage() => _settings.supportedLanguages[0];
   List<String> getSupportedLanguages() => _settings.supportedLanguages;
@@ -48,23 +44,24 @@ class LocalizationService extends ChangeNotifier {
       _languageCode = _settings.supportedLanguages[0];
     }
 
-    print('FlutterLocalization: currentLanguageCode is "$_languageCode"');
+    print('flutter_localization: currentLanguageCode is "$_languageCode"');
 
     await _getCurrentLocalization();
   }
 
   Future<void> _getCurrentLocalization() async {
-    var localization = await _fileService.getLocalization();
-    if (localization != null) {
-      _currentLocalizationVersion = localization['version'];
-      _initLocalizationStringFromJsonMap(localization['localization']);
+    LocalFile settingsLocalFile = _settings.localFiles[_settings.localizationIndex];
+    LocalFile localizationFile = await _fileService.getLocalFile(settingsLocalFile.id);
+    if (localizationFile != null) {
+      _initLocalizationStringFromJsonMap(jsonDecode(localizationFile.data));
     } else {
-      Map<String, dynamic> localizationMap = jsonDecode(await rootBundle.loadString(_settings.localizationJsonPath));
+      Map<String, dynamic> localizationMap = jsonDecode(await rootBundle.loadString(settingsLocalFile.assetsPath));
       _initLocalizationStringFromJsonMap(localizationMap);
     }
   }
 
   void _initLocalizationStringFromJsonMap(Map<String, dynamic> jsonMap) {
+    localizationStrings = {};
     for (String key in jsonMap.keys) {
       Map<String, dynamic> localizationMap = jsonMap[key];
       localizationStrings[key] = LocalizedString.fromMap(localizationMap);
@@ -73,6 +70,7 @@ class LocalizationService extends ChangeNotifier {
   }
 
   String getCurrentLanguageCode() => _languageCode;
+
   String getLocalizedString(String key, {Map<String, String> variables = const {}}) {
     String localizedString = localizationStrings[key]?.getLocalizedString() ?? key;
     variables.forEach((key, value) {
@@ -127,79 +125,83 @@ class LocalizationService extends ChangeNotifier {
 
   LocalizedString getLocalization(String key) => localizationStrings[key];
 
-  Future<String> getMarkdownFile(String name) async {
-    MarkdownFile markdownFile = await _fileService.getMarkdownFile(name, getCurrentLanguageCode());
+  Future<String> getLocalFile(String name) async {
+    String id = '$name.${getCurrentLanguageCode()}';
+    LocalFile localFile = await _fileService.getLocalFile(id);
 
-    if (markdownFile == null) {
-      MarkdownFile file = _settings.markdownFiles
-          .firstWhere((file) => (file.name == name) && (file.language == getCurrentLanguageCode()), orElse: () => null);
-      if (file == null) {
-        print('Markdown file: $name not found for language ${getCurrentLanguageCode()}. Fallback to default language');
-        file = _settings.markdownFiles.firstWhere(
-            (file) => (file.name == name) && (file.language == _settings.supportedLanguages[0]),
-            orElse: () => null);
-      }
-      if (file != null) {
-        String markdown = await rootBundle.loadString(file.localAssetsPath);
-        return markdown;
+    if (localFile == null) {
+      localFile = _settings.localFiles.firstWhere((file) => file.id == id, orElse: () => null);
+      if (localFile == null) {
+        print(
+            'flutter_localization: Local file: $name not found for language ${getCurrentLanguageCode()}. Fallback to default language');
+        String defaultId = '$name.${_settings.supportedLanguages[0]}';
+        localFile = await _fileService.getLocalFile(defaultId);
+        if (localFile == null) {
+          localFile = _settings.localFiles.firstWhere((file) => file.id == defaultId, orElse: () => null);
+          if (localFile != null) {
+            String data = await rootBundle.loadString(localFile.assetsPath);
+            return data;
+          } else {
+            print('flutter_localization: Local file: $name not found');
+            return null;
+          }
+        } else {
+          return localFile.data;
+        }
       } else {
-        print('Markdown file: $name not found');
-        return null;
+        String data = await rootBundle.loadString(localFile.assetsPath);
+        return data;
       }
     } else {
-      return markdownFile.markdown;
+      return localFile.data;
     }
   }
 
-  Future<void> updateMarkdownFiles() async {
-    print('update markdown files called');
-    for (MarkdownFile file in _settings.markdownFiles) {
-      if (file.networkUrl != null) {
-        String url = file.networkUrl;
-        if (file.version != null) {
-          url = url.replaceFirst('version', file.version);
-        }
-        Map<String, dynamic> markdownMap = await _networkService.getJson(url);
-        if (markdownMap != null) {
-          if (file.version != null && file.version == markdownMap['version']) {
-            print('markdown file: ${file.name} already up to date.');
-          } else {
-            print('markdown file: ${file.name} needs update.');
-            String markdownFileDownloadUrl = markdownMap['url'];
-            Uint8List bytes = await _networkService.httpGet(markdownFileDownloadUrl);
-            String markdown = Utf8Decoder().convert(bytes);
-            file.markdown = markdown;
-            file.version = markdownMap['version'];
-            await _fileService.saveMarkdownFile(file);
-            print('markdown file: ${file.name} updated.');
+  Future<String> getLocalFileById(String id) async {
+    List<String> split = id.split('.');
+    String name = split[0];
+    return getLocalFile(name);
+  }
+
+  Future<void> sync(
+      String authToken, String uuid, String fcmToken, String platform, String device, String os, String version) async {
+    print('flutter_localization: sync called');
+
+    Map<String, dynamic> sync =
+        await _graphQLService.sync(authToken, _settings.graphQLEndpoint, uuid, fcmToken, platform, device, os, version);
+
+    List<dynamic> assets = sync['assets'];
+    //TODO: implement messages
+//    List<dynamic> messages = sync['messages'];
+
+    for (LocalFile file in _settings.localFiles) {
+      Map<String, dynamic> asset = assets.firstWhere((element) => element['id'] == file.id, orElse: () => null);
+      if (asset != null) {
+        LocalFile storedFile = await _fileService.getLocalFile(file.id);
+        String localMd5 = storedFile != null ? storedFile.md5 : file.md5;
+
+        String md5 = asset['md5'];
+        if (md5 != localMd5) {
+          try {
+            var responseBytes =
+                await _networkService.httpGet(url: '${_settings.assetsEndpoint}/${asset['path']}', token: authToken);
+            String data = Utf8Decoder().convert(responseBytes);
+            file.data = data;
+            file.md5 = md5;
+            await _fileService.saveLocalFile(file, overwrite: true);
+            print('flutter_localization: ${file.id} successfully updated');
+          } catch (e) {
+            print('flutter_localization: error fetching file with id: ${file.id} with error: ${e.toString()}');
           }
+        } else {
+          print('flutter_localization: local file with id: ${file.id} already up to date');
         }
-      }
-    }
-  }
-
-  Future<void> updateLocalization() async {
-    print('update localization called');
-
-    if (_settings.updateLocalizationUrl != null) {
-      String url = _settings.updateLocalizationUrl;
-
-      bool useVersion = _settings.initialLocalizationVersion != null;
-
-      if (useVersion) {
-        url.replaceFirst('version', _currentLocalizationVersion);
-      }
-
-      Map<String, dynamic> localization = await _networkService.getJson(url);
-
-      String newVersion = useVersion ? localization['version'] : null;
-      if (newVersion == null || newVersion != _currentLocalizationVersion) {
-        print('new localization downloaded');
-        _fileService.saveLocalization(localization);
-        _initLocalizationStringFromJsonMap(localization['localization']);
       } else {
-        print('localization is up to date');
+        print('flutter_localization: local file with name: ${file.id} not found in sync assets');
       }
     }
+
+    // update localization after sync
+    await _getCurrentLocalization();
   }
 }

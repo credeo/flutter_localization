@@ -3,38 +3,17 @@ library flutter_localization;
 import 'package:flutter_localization/model/localization_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
 import 'package:flutter_localization/service/file_service.dart';
+import 'package:flutter_localization/service/graphql_service.dart';
 import 'package:flutter_localization/service/localization_service.dart';
 import 'package:flutter_localization/service/network_service.dart';
-import 'package:flutter_localization/model/markdown_file.dart';
 import 'package:flutter/material.dart';
 import 'package:kiwi/kiwi.dart' as kiwi;
 
 /// [init] needs to be called before using other [FlutterLocalization] methods
 ///
-/// If [LocalizationSettings.updateLocalizationUrl] is provided localization file can be updated
-/// In that case expected format of localization return data is:
-/// {
-///   "version" : "some_value",
-///   "localization" : {
-///     "supportedLanguage1: "value",
-///     "supportedLanguage2: "value",
-///     ...
-///     "supportedLanguageX: "value",
-///   }
-/// }
-/// Note: "version" is used only if [LocalizationSettings.initialLocalizationVersion] is provided
-///
 /// **************************************************************
 ///
-/// Markdown file naming rule in local file system: "name.supportedLanguageX.md"
-///
-/// If [MarkdownFile.networkUrl] is provided markdown file can be updated
-/// In that case expected format of markdown return data is:
-/// {
-///   "version" : "some_value",
-///   "url" : "url_to_download_text-markdown_file"
-/// }
-/// Note: "version" is used only if [MarkdownFile.version] is provided
+/// Local file naming rule: "name.language.md"
 
 class FlutterLocalization {
   static LocalizationSettings _localizationSettings;
@@ -46,6 +25,7 @@ class FlutterLocalization {
     _localizationSettings = localizationSettings;
     kiwi.Container().registerSingleton((c) => NetworkService());
     kiwi.Container().registerSingleton((c) => FileService());
+    kiwi.Container().registerSingleton((c) => GraphQLService());
     kiwi.Container().registerSingleton(
       (c) => LocalizationService(
         settings: _localizationSettings,
@@ -56,19 +36,14 @@ class FlutterLocalization {
     await localizationService.init();
   }
 
-  /// update localization file
-  static Future<void> update() async {
+  /// sync local files, throws Exception if failed
+  static Future<void> sync(
+      String authToken, String uuid, String fcmToken, String platform, String device, String os, String version) async {
     assert(_initCalled == true, 'init() not called');
-    assert(_localizationSettings.updateLocalizationUrl != null, 'update localization url cannot be null');
+    assert(_localizationSettings.graphQLEndpoint != null, 'graphQLEndpoint cannot be null');
+    assert(_localizationSettings.assetsEndpoint != null, 'assetsEndpoint cannot be null');
     LocalizationService localizationService = kiwi.Container().resolve<LocalizationService>();
-    return localizationService.updateLocalization();
-  }
-
-  /// update markdown files
-  static Future<void> updateMarkdownFiles() async {
-    assert(_initCalled == true, 'init() not called');
-    LocalizationService localizationService = kiwi.Container().resolve<LocalizationService>();
-    return localizationService.updateMarkdownFiles();
+    return localizationService.sync(authToken, uuid, fcmToken, platform, device, os, version);
   }
 }
 
@@ -89,9 +64,9 @@ TextSpan getLocalizedRichString(String key, {Map<String, String> variables = con
   return _localizationService.getLocalizedRichString(key, variables: variables);
 }
 
-Future<String> getMarkdownFile(String name) async {
+Future<String> getLocalFile(String name) async {
   assert(FlutterLocalization._localizationSettings != null, 'FlutterLocalization.init not called');
-  return await _localizationService.getMarkdownFile(name);
+  return await _localizationService.getLocalFile(name);
 }
 
 String getCurrentLocalizationCode() {
