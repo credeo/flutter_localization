@@ -125,29 +125,13 @@ class LocalizationService extends ChangeNotifier {
 
   LocalizedString getLocalization(String key) => localizationStrings[key];
 
-  Future<String> getLocalFile(String name) async {
-    String id = '$name.${getCurrentLanguageCode()}';
+  Future<String> getLocalFile(String id) async {
     LocalFile localFile = await _fileService.getLocalFile(id);
-
     if (localFile == null) {
       localFile = _settings.localFiles.firstWhere((file) => file.id == id, orElse: () => null);
       if (localFile == null) {
-        print(
-            'flutter_localization: Local file: $name not found for language ${getCurrentLanguageCode()}. Fallback to default language');
-        String defaultId = '$name.${_settings.supportedLanguages[0]}';
-        localFile = await _fileService.getLocalFile(defaultId);
-        if (localFile == null) {
-          localFile = _settings.localFiles.firstWhere((file) => file.id == defaultId, orElse: () => null);
-          if (localFile != null) {
-            String data = await rootBundle.loadString(localFile.assetsPath);
-            return data;
-          } else {
-            print('flutter_localization: Local file: $name not found');
-            return null;
-          }
-        } else {
-          return localFile.data;
-        }
+        print('flutter_localization: Local file: $id not found');
+        return null;
       } else {
         String data = await rootBundle.loadString(localFile.assetsPath);
         return data;
@@ -155,12 +139,6 @@ class LocalizationService extends ChangeNotifier {
     } else {
       return localFile.data;
     }
-  }
-
-  Future<String> getLocalFileById(String id) async {
-    List<String> split = id.split('.');
-    String name = split[0];
-    return getLocalFile(name);
   }
 
   Future<void> sync(

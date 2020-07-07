@@ -64,9 +64,9 @@ TextSpan getLocalizedRichString(String key, {Map<String, String> variables = con
   return _localizationService.getLocalizedRichString(key, variables: variables);
 }
 
-Future<String> getLocalFile(String name) async {
+Future<String> getLocalFile(String id) async {
   assert(FlutterLocalization._localizationSettings != null, 'FlutterLocalization.init not called');
-  return await _localizationService.getLocalFile(name);
+  return await _localizationService.getLocalFile(id);
 }
 
 String getCurrentLocalizationCode() {
