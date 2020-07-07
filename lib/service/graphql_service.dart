@@ -6,30 +6,26 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 class GraphQLService {
   GraphQLClient _client;
 
-  Future<void> _initNetworkService(String syncEndpoint) async {
+  Future<void> _initNetworkService(String syncEndpoint, {String authHeader}) async {
     try {
-//      var firebaseUser = await FirebaseAuth.instance.currentUser();
-//
-//      if (firebaseUser != null) {
-//        var token = await firebaseUser.getIdToken();
-//        if (token != null) {
-//          authLink = AuthLink(
-//            getToken: () => 'Bearer ${token.token}',
-//          );
-//          link = authLink.concat(_httpLink);
-//        } else {
-//          link = _httpLink;
-//        }
-//      } else {
-//        link = _httpLink;
-//      }
-
-      _client = GraphQLClient(
-        link: HttpLink(uri: syncEndpoint),
-        cache: OptimisticCache(
-          dataIdFromObject: typenameDataIdFromObject,
-        ),
-      );
+      if (authHeader != null) {
+        AuthLink authLink = AuthLink(
+          getToken: () => authHeader,
+        );
+        _client = GraphQLClient(
+          link: authLink.concat(HttpLink(uri: syncEndpoint)),
+          cache: OptimisticCache(
+            dataIdFromObject: typenameDataIdFromObject,
+          ),
+        );
+      } else {
+        _client = GraphQLClient(
+          link: HttpLink(uri: syncEndpoint),
+          cache: OptimisticCache(
+            dataIdFromObject: typenameDataIdFromObject,
+          ),
+        );
+      }
     } catch (e) {
       if (e is SocketException) {
         print("flutter_localization: graphql_service: SocketException on initing graphQLClient with error: $e");
@@ -72,9 +68,9 @@ class GraphQLService {
     }
   }
 
-  Future<dynamic> sync(String authToken, String graphQLEndpoint, String uuid, String fcmToken, String platform, String device,
+  Future<dynamic> sync(String authHeader, String graphQLEndpoint, String uuid, String fcmToken, String platform, String device,
       String os, String version) async {
-    await _initNetworkService('$graphQLEndpoint');
+    await _initNetworkService('$graphQLEndpoint', authHeader: authHeader);
 
     try {
       var result = await _callQuery(

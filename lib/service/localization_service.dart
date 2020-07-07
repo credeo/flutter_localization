@@ -142,11 +142,11 @@ class LocalizationService extends ChangeNotifier {
   }
 
   Future<void> sync(
-      String authToken, String uuid, String fcmToken, String platform, String device, String os, String version) async {
+      String authHeader, String uuid, String fcmToken, String platform, String device, String os, String version) async {
     print('flutter_localization: sync called');
 
     Map<String, dynamic> sync =
-        await _graphQLService.sync(authToken, _settings.graphQLEndpoint, uuid, fcmToken, platform, device, os, version);
+        await _graphQLService.sync(authHeader, _settings.graphQLEndpoint, uuid, fcmToken, platform, device, os, version);
 
     List<dynamic> assets = sync['assets'];
     //TODO: implement messages
