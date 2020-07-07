@@ -68,8 +68,9 @@ class GraphQLService {
     }
   }
 
-  Future<dynamic> sync(String authHeader, String graphQLEndpoint, String uuid, String fcmToken, String platform, String device,
-      String os, String version) async {
+  Future<dynamic> sync(
+      String graphQLEndpoint, String uuid, String fcmToken, String platform, String device, String os, String version,
+      {String authHeader}) async {
     await _initNetworkService('$graphQLEndpoint', authHeader: authHeader);
 
     try {

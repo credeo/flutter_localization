@@ -141,12 +141,12 @@ class LocalizationService extends ChangeNotifier {
     }
   }
 
-  Future<void> sync(
-      String authHeader, String uuid, String fcmToken, String platform, String device, String os, String version) async {
+  Future<void> sync(String uuid, String fcmToken, String platform, String device, String os, String version,
+      {String authHeader}) async {
     print('flutter_localization: sync called');
 
-    Map<String, dynamic> sync =
-        await _graphQLService.sync(authHeader, _settings.graphQLEndpoint, uuid, fcmToken, platform, device, os, version);
+    Map<String, dynamic> sync = await _graphQLService
+        .sync(_settings.graphQLEndpoint, uuid, fcmToken, platform, device, os, version, authHeader: authHeader);
 
     List<dynamic> assets = sync['assets'];
     //TODO: implement messages
@@ -162,7 +162,7 @@ class LocalizationService extends ChangeNotifier {
         if (md5 != localMd5) {
           try {
             var responseBytes =
-                await _networkService.httpGet(url: '${_settings.assetsEndpoint}/${asset['path']}', token: authToken);
+                await _networkService.httpGet(url: '${_settings.assetsEndpoint}/${asset['path']}', authHeader: authHeader);
             String data = Utf8Decoder().convert(responseBytes);
             file.data = data;
             file.md5 = md5;

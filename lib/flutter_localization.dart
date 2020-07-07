@@ -37,13 +37,13 @@ class FlutterLocalization {
   }
 
   /// sync local files, throws Exception if failed
-  static Future<void> sync(
-      String authHeader, String uuid, String fcmToken, String platform, String device, String os, String version) async {
+  static Future<void> sync(String uuid, String fcmToken, String platform, String device, String os, String version,
+      {String authHeader}) async {
     assert(_initCalled == true, 'init() not called');
     assert(_localizationSettings.graphQLEndpoint != null, 'graphQLEndpoint cannot be null');
     assert(_localizationSettings.assetsEndpoint != null, 'assetsEndpoint cannot be null');
     LocalizationService localizationService = kiwi.Container().resolve<LocalizationService>();
-    return localizationService.sync(authHeader, uuid, fcmToken, platform, device, os, version);
+    return localizationService.sync(uuid, fcmToken, platform, device, os, version, authHeader: authHeader);
   }
 }
 
