@@ -43,7 +43,7 @@ class FlutterLocalization {
     assert(_localizationSettings.graphQLEndpoint != null, 'graphQLEndpoint cannot be null');
     assert(_localizationSettings.assetsEndpoint != null, 'assetsEndpoint cannot be null');
     LocalizationService localizationService = kiwi.Container().resolve<LocalizationService>();
-    return localizationService.sync(uuid, fcmToken, platform, device, os, version, authHeader: authHeader);
+    await localizationService.sync(uuid, fcmToken, platform, device, os, version, authHeader: authHeader);
   }
 }
 
