@@ -1,8 +1,8 @@
 import 'package:flutter_localization/service/localization_service.dart';
-import 'package:kiwi/kiwi.dart' as kiwi;
+import 'package:kiwi/kiwi.dart';
 
 class LocalizedString {
-  LocalizationService _localizationService = kiwi.Container().resolve<LocalizationService>();
+  LocalizationService _localizationService = KiwiContainer().resolve<LocalizationService>();
   Map<String, String> localizedStrings;
 
   LocalizedString({this.localizedStrings = const {}});

@@ -9,13 +9,13 @@ import 'package:flutter_localization/service/graphql_service.dart';
 import 'package:flutter_localization/service/network_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kiwi/kiwi.dart' as kiwi;
+import 'package:kiwi/kiwi.dart';
 import 'package:devicelocale/devicelocale.dart';
 
 class LocalizationService extends ChangeNotifier {
-  final NetworkService _networkService = kiwi.Container().resolve<NetworkService>();
-  final GraphQLService _graphQLService = kiwi.Container().resolve<GraphQLService>();
-  final FileService _fileService = kiwi.Container().resolve<FileService>();
+  final NetworkService _networkService = KiwiContainer().resolve<NetworkService>();
+  final GraphQLService _graphQLService = KiwiContainer().resolve<GraphQLService>();
+  final FileService _fileService = KiwiContainer().resolve<FileService>();
 
   final LocalizationSettings _settings;
   String _languageCode;

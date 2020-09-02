@@ -7,7 +7,7 @@ import 'package:flutter_localization/service/graphql_service.dart';
 import 'package:flutter_localization/service/localization_service.dart';
 import 'package:flutter_localization/service/network_service.dart';
 import 'package:flutter/material.dart';
-import 'package:kiwi/kiwi.dart' as kiwi;
+import 'package:kiwi/kiwi.dart';
 
 /// [init] needs to be called before using other [FlutterLocalization] methods
 ///
@@ -23,16 +23,16 @@ class FlutterLocalization {
     assert(_initCalled == false, 'init() can be called only once');
     _initCalled = true;
     _localizationSettings = localizationSettings;
-    kiwi.Container().registerSingleton((c) => NetworkService());
-    kiwi.Container().registerSingleton((c) => FileService());
-    kiwi.Container().registerSingleton((c) => GraphQLService());
-    kiwi.Container().registerSingleton(
+    KiwiContainer().registerSingleton((c) => NetworkService());
+    KiwiContainer().registerSingleton((c) => FileService());
+    KiwiContainer().registerSingleton((c) => GraphQLService());
+    KiwiContainer().registerSingleton(
       (c) => LocalizationService(
         settings: _localizationSettings,
       ),
     );
 
-    LocalizationService localizationService = kiwi.Container().resolve<LocalizationService>();
+    LocalizationService localizationService = KiwiContainer().resolve<LocalizationService>();
     await localizationService.init();
   }
 
@@ -42,12 +42,12 @@ class FlutterLocalization {
     assert(_initCalled == true, 'init() not called');
     assert(_localizationSettings.graphQLEndpoint != null, 'graphQLEndpoint cannot be null');
     assert(_localizationSettings.assetsEndpoint != null, 'assetsEndpoint cannot be null');
-    LocalizationService localizationService = kiwi.Container().resolve<LocalizationService>();
+    LocalizationService localizationService = KiwiContainer().resolve<LocalizationService>();
     await localizationService.sync(uuid, fcmToken, platform, device, os, version, authHeader: authHeader);
   }
 }
 
-LocalizationService _localizationService = kiwi.Container().resolve<LocalizationService>();
+LocalizationService _localizationService = KiwiContainer().resolve<LocalizationService>();
 
 String getLocalizedString(String key, {Map<String, String> variables = const {}}) {
   assert(FlutterLocalization._localizationSettings != null, 'FlutterLocalization.init not called');
