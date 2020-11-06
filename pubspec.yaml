@@ -11,10 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  kiwi: ^2.0.0
+  kiwi: ^2.1.1
   http: ^0.12.2
-  path_provider: ^1.6.14
-  devicelocale: ^0.3.1
+  path_provider: ^1.6.24
+  devicelocale: ^0.3.3
   graphql_flutter: ^3.1.0
 
 dev_dependencies:
