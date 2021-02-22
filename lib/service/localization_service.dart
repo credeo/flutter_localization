@@ -5,16 +5,12 @@ import 'package:flutter_localization/model/localization_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
 import 'package:flutter_localization/model/local_file.dart';
 import 'package:flutter_localization/service/file_service.dart';
-import 'package:flutter_localization/service/graphql_service.dart';
-import 'package:flutter_localization/service/network_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kiwi/kiwi.dart';
 import 'package:devicelocale/devicelocale.dart';
 
 class LocalizationService extends ChangeNotifier {
-  final NetworkService _networkService = KiwiContainer().resolve<NetworkService>();
-  final GraphQLService _graphQLService = KiwiContainer().resolve<GraphQLService>();
   final FileService _fileService = KiwiContainer().resolve<FileService>();
 
   final LocalizationSettings _settings;
@@ -139,47 +135,5 @@ class LocalizationService extends ChangeNotifier {
     } else {
       return localFile.data;
     }
-  }
-
-  Future<void> sync(String uuid, String fcmToken, String platform, String device, String os, String version,
-      {String authHeader}) async {
-    print('flutter_localization: sync called');
-
-    Map<String, dynamic> sync = await _graphQLService
-        .sync(_settings.graphQLEndpoint, uuid, fcmToken, platform, device, os, version, authHeader: authHeader);
-
-    List<dynamic> assets = sync['assets'];
-    //TODO: implement messages
-//    List<dynamic> messages = sync['messages'];
-
-    for (LocalFile file in _settings.localFiles) {
-      Map<String, dynamic> asset = assets.firstWhere((element) => element['id'] == file.id, orElse: () => null);
-      if (asset != null) {
-        LocalFile storedFile = await _fileService.getLocalFile(file.id);
-        String localMd5 = storedFile != null ? storedFile.md5 : file.md5;
-
-        String md5 = asset['md5'];
-        if (md5 != localMd5) {
-          try {
-            var responseBytes =
-                await _networkService.httpGet(url: '${_settings.assetsEndpoint}/${asset['path']}', authHeader: authHeader);
-            String data = Utf8Decoder().convert(responseBytes);
-            file.data = data;
-            file.md5 = md5;
-            await _fileService.saveLocalFile(file, overwrite: true);
-            print('flutter_localization: ${file.id} successfully updated');
-          } catch (e) {
-            print('flutter_localization: error fetching file with id: ${file.id} with error: ${e.toString()}');
-          }
-        } else {
-          print('flutter_localization: local file with id: ${file.id} already up to date');
-        }
-      } else {
-        print('flutter_localization: local file with name: ${file.id} not found in sync assets');
-      }
-    }
-
-    // update localization after sync
-    await _getCurrentLocalization();
   }
 }

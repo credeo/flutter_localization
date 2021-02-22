@@ -13,15 +13,6 @@ class LocalizationSettings {
   /// Index of localization [LocalFile] in [localFiles].
   final int localizationIndex;
 
-  /// Required if [sync] is used
-  /// Backend will return a list of assets and messages
-  final String graphQLEndpoint;
-
-  /// Required if [sync] is used
-  /// After assets are obtained from graphQl we need to fetch each file separately using rest api
-  /// Endpoint for each file is generated using [assetsEndpoint] and path obtained from graphql query
-  final String assetsEndpoint;
-
   /// List of local files used within the app
   /// Cannot be null or empty
   /// Can be updated via [sync]
@@ -30,8 +21,6 @@ class LocalizationSettings {
   LocalizationSettings({
     this.supportedLanguages = const ['en'],
     this.localizationIndex = 0,
-    this.graphQLEndpoint,
-    this.assetsEndpoint,
     this.localFiles,
   })  : assert(localFiles.length > 0, 'localFiles cannot be empty or null'),
         assert(localizationIndex < localFiles.length, 'localizationIndex needs to be lower than length of localFiles'),

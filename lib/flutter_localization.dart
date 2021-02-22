@@ -3,9 +3,7 @@ library flutter_localization;
 import 'package:flutter_localization/model/localization_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
 import 'package:flutter_localization/service/file_service.dart';
-import 'package:flutter_localization/service/graphql_service.dart';
 import 'package:flutter_localization/service/localization_service.dart';
-import 'package:flutter_localization/service/network_service.dart';
 import 'package:flutter/material.dart';
 import 'package:kiwi/kiwi.dart';
 
@@ -23,9 +21,7 @@ class FlutterLocalization {
     assert(_initCalled == false, 'init() can be called only once');
     _initCalled = true;
     _localizationSettings = localizationSettings;
-    KiwiContainer().registerSingleton((c) => NetworkService());
     KiwiContainer().registerSingleton((c) => FileService());
-    KiwiContainer().registerSingleton((c) => GraphQLService());
     KiwiContainer().registerSingleton(
       (c) => LocalizationService(
         settings: _localizationSettings,
@@ -34,16 +30,6 @@ class FlutterLocalization {
 
     LocalizationService localizationService = KiwiContainer().resolve<LocalizationService>();
     await localizationService.init();
-  }
-
-  /// sync local files, throws Exception if failed
-  static Future<void> sync(String uuid, String fcmToken, String platform, String device, String os, String version,
-      {String authHeader}) async {
-    assert(_initCalled == true, 'init() not called');
-    assert(_localizationSettings.graphQLEndpoint != null, 'graphQLEndpoint cannot be null');
-    assert(_localizationSettings.assetsEndpoint != null, 'assetsEndpoint cannot be null');
-    LocalizationService localizationService = KiwiContainer().resolve<LocalizationService>();
-    await localizationService.sync(uuid, fcmToken, platform, device, os, version, authHeader: authHeader);
   }
 }
 
