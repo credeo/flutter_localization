@@ -1,6 +1,6 @@
 name: flutter_localization
 description: Flutter Localization
-version: 1.0.0
+version: 1.1.0
 author: Filip Rajicic
 homepage: www.credeo.de
 
@@ -10,9 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  kiwi: ^2.1.1
-  path_provider: ^1.6.27
   devicelocale: ^0.3.3
 
 dev_dependencies:

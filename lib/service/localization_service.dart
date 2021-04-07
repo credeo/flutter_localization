@@ -1,30 +1,29 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:flutter_localization/model/local_file.dart';
 import 'package:flutter_localization/model/localization_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
-import 'package:flutter_localization/model/local_file.dart';
-import 'package:flutter_localization/service/file_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kiwi/kiwi.dart';
 import 'package:devicelocale/devicelocale.dart';
 
-class LocalizationService extends ChangeNotifier {
-  final FileService _fileService = KiwiContainer().resolve<FileService>();
+class LocalizationService {
+  static final LocalizationService _instance = LocalizationService._();
+  static LocalizationService get instance => _instance;
 
-  final LocalizationSettings _settings;
+  LocalizationService._();
+
+  LocalizationSettings _settings;
   String _languageCode;
-  Map<String, LocalizedString> localizationStrings = {};
+  Map<String, LocalizedString> _localizationStrings = {};
 
-  LocalizationService({
-    LocalizationSettings settings,
-  }) : _settings = settings;
+  String get currentLanguageCode => _languageCode;
+  String get defaultLanguageCode => _settings.supportedLanguages[0];
+  List<String> get supportedLanguages => _settings.supportedLanguages;
 
-  String getDefaultLanguage() => _settings.supportedLanguages[0];
-  List<String> getSupportedLanguages() => _settings.supportedLanguages;
-
-  Future<void> init() async {
+  Future<void> init({LocalizationSettings settings}) async {
+    _settings = settings;
     String appLanguageCode = await Devicelocale.currentLocale;
     if (appLanguageCode.contains('-')) {
       appLanguageCode = appLanguageCode.split('-')[0];
@@ -42,33 +41,24 @@ class LocalizationService extends ChangeNotifier {
 
     print('flutter_localization: currentLanguageCode is "$_languageCode"');
 
-    await _getCurrentLocalization();
+    await _readLocalization();
   }
 
-  Future<void> _getCurrentLocalization() async {
-    LocalFile settingsLocalFile = _settings.localFiles[_settings.localizationIndex];
-    LocalFile localizationFile = await _fileService.getLocalFile(settingsLocalFile.id);
-    if (localizationFile != null) {
-      _initLocalizationStringFromJsonMap(jsonDecode(localizationFile.data));
-    } else {
-      Map<String, dynamic> localizationMap = jsonDecode(await rootBundle.loadString(settingsLocalFile.assetsPath));
-      _initLocalizationStringFromJsonMap(localizationMap);
-    }
+  Future<void> _readLocalization() async {
+    final Map<String, dynamic> localizationMap = jsonDecode(await rootBundle.loadString(_settings.localisationFilePath));
+    _initLocalizationStringFromJsonMap(localizationMap);
   }
 
   void _initLocalizationStringFromJsonMap(Map<String, dynamic> jsonMap) {
-    localizationStrings = {};
+    _localizationStrings = {};
     for (String key in jsonMap.keys) {
       Map<String, dynamic> localizationMap = jsonMap[key];
-      localizationStrings[key] = LocalizedString.fromMap(localizationMap);
+      _localizationStrings[key] = LocalizedString.fromMap(localizationMap);
     }
-    notifyListeners();
   }
 
-  String getCurrentLanguageCode() => _languageCode;
-
   String getLocalizedString(String key, {Map<String, String> variables = const {}}) {
-    String localizedString = localizationStrings[key]?.getLocalizedString() ?? key;
+    String localizedString = _localizationStrings[key]?.getLocalizedString() ?? key;
     variables.forEach((key, value) {
       localizedString = localizedString.replaceAll('{$key}', value);
     });
@@ -119,21 +109,31 @@ class LocalizationService extends ChangeNotifier {
     return TextSpan(children: textSpans);
   }
 
-  LocalizedString getLocalization(String key) => localizationStrings[key];
+  LocalizedString getLocalization(String key) => _localizationStrings[key];
 
-  Future<String> getLocalFile(String id) async {
-    LocalFile localFile = await _fileService.getLocalFile(id);
+  Future<String> getLocalFile({@required String id, @required String languageCode}) async {
+    final localFile =
+        _settings.localFiles.firstWhere((file) => file.id == id && file.langCode == languageCode, orElse: () => null);
     if (localFile == null) {
-      localFile = _settings.localFiles.firstWhere((file) => file.id == id, orElse: () => null);
-      if (localFile == null) {
-        print('flutter_localization: Local file: $id not found');
-        return null;
-      } else {
-        String data = await rootBundle.loadString(localFile.assetsPath);
-        return data;
-      }
+      print('flutter_localization: Local file with id: $id and langCode: $languageCode not found');
+      return null;
     } else {
-      return localFile.data;
+      return rootBundle.loadString(localFile.assetsPath);
     }
+  }
+
+  Future<String> getLocalizedLocalFile(String id) async {
+    LocalFile localFile =
+        _settings.localFiles.firstWhere((file) => file.id == id && file.langCode == currentLanguageCode, orElse: () => null);
+    if (localFile == null) {
+      print('flutter_localization: Local file with id: $id not found for current language. Fallback to default language');
+      localFile =
+          _settings.localFiles.firstWhere((file) => file.id == id && file.langCode == defaultLanguageCode, orElse: () => null);
+    }
+    if (localFile == null) {
+      print('flutter_localization: Local file with id: $id not found for default language');
+      return null;
+    }
+    return rootBundle.loadString(localFile.assetsPath);
   }
 }
