@@ -23,7 +23,7 @@ class LocalizedString {
   }
 
   String getLocalizedString() {
-    String localizedString = localizedStrings[LocalizationService.instance.currentLanguageCode];
+    String? localizedString = localizedStrings[LocalizationService.instance.currentLanguageCode];
     if (localizedString == null || localizedString.isEmpty) {
       localizedString = localizedStrings[LocalizationService.instance.defaultLanguageCode] ?? '';
     }

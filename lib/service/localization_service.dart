@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:flutter_localization/model/local_file.dart';
 import 'package:flutter_localization/model/localization_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:devicelocale/devicelocale.dart';
+import 'package:collection/collection.dart';
 
 class LocalizationService {
   static final LocalizationService _instance = LocalizationService._();
@@ -14,26 +14,25 @@ class LocalizationService {
 
   LocalizationService._();
 
-  LocalizationSettings _settings;
-  String _languageCode;
+  late LocalizationSettings _settings;
+  late String _languageCode;
   Map<String, LocalizedString> _localizationStrings = {};
 
   String get currentLanguageCode => _languageCode;
   String get defaultLanguageCode => _settings.supportedLanguages[0];
   List<String> get supportedLanguages => _settings.supportedLanguages;
 
-  Future<void> init({LocalizationSettings settings}) async {
+  Future<void> init({required LocalizationSettings settings}) async {
     _settings = settings;
-    String appLanguageCode = await Devicelocale.currentLocale;
-    if (appLanguageCode.contains('-')) {
-      appLanguageCode = appLanguageCode.split('-')[0];
-    } else {
-      appLanguageCode = appLanguageCode.split('_')[0];
-    }
-
+    String? appLanguageCode = await Devicelocale.currentLocale;
     if (appLanguageCode != null) {
+      if (appLanguageCode.contains('-')) {
+        appLanguageCode = appLanguageCode.split('-')[0];
+      } else {
+        appLanguageCode = appLanguageCode.split('_')[0];
+      }
       _languageCode = _settings.supportedLanguages.firstWhere(
-          (supportedLanguage) => supportedLanguage.startsWith(appLanguageCode),
+          (supportedLanguage) => supportedLanguage.startsWith(appLanguageCode!),
           orElse: () => _settings.supportedLanguages[0]);
     } else {
       _languageCode = _settings.supportedLanguages[0];
@@ -45,7 +44,8 @@ class LocalizationService {
   }
 
   Future<void> _readLocalization() async {
-    final Map<String, dynamic> localizationMap = jsonDecode(await rootBundle.loadString(_settings.localisationFilePath));
+    final Map<String, dynamic> localizationMap =
+        jsonDecode(await rootBundle.loadString(_settings.localisationFilePath));
     _initLocalizationStringFromJsonMap(localizationMap);
   }
 
@@ -86,7 +86,7 @@ class LocalizationService {
       var span1 = TextSpan(
         text: localizedString.substring(index, match.start - 1),
       );
-      if (span1.text.isNotEmpty) textSpans.add(span1);
+      if (span1.text?.isNotEmpty == true) textSpans.add(span1);
 
       var span2 = TextSpan(
         text: localizedString.substring(match.start, match.end),
@@ -109,11 +109,10 @@ class LocalizationService {
     return TextSpan(children: textSpans);
   }
 
-  LocalizedString getLocalization(String key) => _localizationStrings[key];
+  LocalizedString? getLocalization(String key) => _localizationStrings[key];
 
-  Future<String> getLocalFile({@required String id, @required String languageCode}) async {
-    final localFile =
-        _settings.localFiles.firstWhere((file) => file.id == id && file.langCode == languageCode, orElse: () => null);
+  Future<String?> getLocalFile({required String id, required String languageCode}) async {
+    final localFile = _settings.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == languageCode);
     if (localFile == null) {
       print('flutter_localization: Local file with id: $id and langCode: $languageCode not found');
       return null;
@@ -122,13 +121,14 @@ class LocalizationService {
     }
   }
 
-  Future<String> getLocalizedLocalFile(String id) async {
-    LocalFile localFile =
-        _settings.localFiles.firstWhere((file) => file.id == id && file.langCode == currentLanguageCode, orElse: () => null);
+  Future<String?> getLocalizedLocalFile(String id) async {
+    var localFile =
+        _settings.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == currentLanguageCode);
     if (localFile == null) {
-      print('flutter_localization: Local file with id: $id not found for current language. Fallback to default language');
+      print(
+          'flutter_localization: Local file with id: $id not found for current language. Fallback to default language');
       localFile =
-          _settings.localFiles.firstWhere((file) => file.id == id && file.langCode == defaultLanguageCode, orElse: () => null);
+          _settings.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == defaultLanguageCode);
     }
     if (localFile == null) {
       print('flutter_localization: Local file with id: $id not found for default language');

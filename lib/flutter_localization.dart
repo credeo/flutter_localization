@@ -22,7 +22,7 @@ String getLocalizedString(String key, {Map<String, String> variables = const {}}
   return LocalizationService.instance.getLocalizedString(key, variables: variables);
 }
 
-LocalizedString getLocalization(String key) {
+LocalizedString? getLocalization(String key) {
   assert(FlutterLocalization._initCalled, 'FlutterLocalization.init not called');
   return LocalizationService.instance.getLocalization(key);
 }
@@ -32,15 +32,13 @@ TextSpan getLocalizedRichString(String key, {Map<String, String> variables = con
   return LocalizationService.instance.getLocalizedRichString(key, variables: variables);
 }
 
-Future<String> getLocalFile({@required String id, @required String langCode}) async {
+Future<String?> getLocalFile({required String id, required String langCode}) async {
   assert(FlutterLocalization._initCalled, 'FlutterLocalization.init not called');
-  assert(id != null, 'id is required');
-  assert(langCode != null, 'langCode is required');
   return LocalizationService.instance.getLocalFile(id: id, languageCode: langCode);
 }
 
 /// If file with current language is not found, it will try to get file with default language
-Future<String> getLocalizedLocalFile(String id) async {
+Future<String?> getLocalizedLocalFile(String id) async {
   assert(FlutterLocalization._initCalled, 'FlutterLocalization.init not called');
   return LocalizationService.instance.getLocalizedLocalFile(id);
 }

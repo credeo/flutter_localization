@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_localization/model/local_file.dart';
 
 /// Localization Settings
@@ -18,9 +17,8 @@ class LocalizationSettings {
   final List<LocalFile> localFiles;
 
   LocalizationSettings({
-    @required this.localisationFilePath,
+    required this.localisationFilePath,
     this.supportedLanguages = const ['en'],
     this.localFiles = const [],
-  })  : assert(localisationFilePath != null, 'localisationFilePath cannot be null'),
-        assert(supportedLanguages != null && supportedLanguages.length > 0, 'supportedLanguages cannot be empty');
+  }) : assert(supportedLanguages.length > 0, 'supportedLanguages cannot be empty');
 }
