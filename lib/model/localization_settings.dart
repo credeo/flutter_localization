@@ -4,7 +4,12 @@ import 'package:flutter_localization/model/local_file.dart';
 
 class LocalizationSettings {
   /// Path to the localisation file in app bundle
-  final String localisationFilePath;
+  /// Use either [localisationFilePath] or [localisationJson]
+  final String? localisationFilePath;
+
+  /// Localisation json
+  /// Use either [localisationFilePath] or [localisationJson]
+  final String? localisationJson;
 
   /// The [supportedLanguages] of the app.
   ///
@@ -17,8 +22,11 @@ class LocalizationSettings {
   final List<LocalFile> localFiles;
 
   LocalizationSettings({
-    required this.localisationFilePath,
+    this.localisationFilePath,
+    this.localisationJson,
     this.supportedLanguages = const ['en'],
     this.localFiles = const [],
-  }) : assert(supportedLanguages.length > 0, 'supportedLanguages cannot be empty');
+  })  : assert(supportedLanguages.length > 0, 'supportedLanguages cannot be empty'),
+        assert(localisationFilePath != null || localisationJson != null,
+            'localisationFilePath or localisationJson must not be null');
 }

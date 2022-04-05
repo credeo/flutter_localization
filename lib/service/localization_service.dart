@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter_localization/model/localization_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
@@ -44,8 +43,8 @@ class LocalizationService {
   }
 
   Future<void> _readLocalization() async {
-    final Map<String, dynamic> localizationMap =
-        jsonDecode(await rootBundle.loadString(_settings.localisationFilePath));
+    final localizationJson = _settings.localisationJson ?? await rootBundle.loadString(_settings.localisationFilePath!);
+    final Map<String, dynamic> localizationMap = jsonDecode(localizationJson);
     _initLocalizationStringFromJsonMap(localizationMap);
   }
 
@@ -122,13 +121,10 @@ class LocalizationService {
   }
 
   Future<String?> getLocalizedLocalFile(String id) async {
-    var localFile =
-        _settings.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == currentLanguageCode);
+    var localFile = _settings.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == currentLanguageCode);
     if (localFile == null) {
-      print(
-          'flutter_localization: Local file with id: $id not found for current language. Fallback to default language');
-      localFile =
-          _settings.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == defaultLanguageCode);
+      print('flutter_localization: Local file with id: $id not found for current language. Fallback to default language');
+      localFile = _settings.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == defaultLanguageCode);
     }
     if (localFile == null) {
       print('flutter_localization: Local file with id: $id not found for default language');

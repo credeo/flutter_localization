@@ -1,8 +1,7 @@
 name: flutter_localization
 description: Flutter Localization
-version: 2.0.0
-author: Filip Rajicic
-homepage: www.credeo.de
+version: 2.1.0
+homepage: www.credeo.rs
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
