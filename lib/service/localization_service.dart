@@ -14,14 +14,15 @@ class LocalizationService {
 
   LocalizationService._();
 
-  late LocalizationSettings? _settings;
-  late LocalizationTestSettings? _testSettings;
+  LocalizationSettings? _settings;
+  LocalizationTestSettings? _testSettings;
   late String _languageCode;
   Map<String, LocalizedString> _localizationStrings = {};
 
   String get currentLanguageCode => _languageCode;
-  String get defaultLanguageCode => _testSettings?.languageCode ?? _settings!.supportedLanguages[0];
-  List<String> get supportedLanguages => _testSettings == null ? _settings!.supportedLanguages : [_testSettings!.languageCode];
+  String get defaultLanguageCode => _testSettings?.languageCode ?? _settings?.supportedLanguages[0] ?? '';
+  List<String> get supportedLanguages =>
+      _testSettings == null ? (_settings?.supportedLanguages ?? []) : [_testSettings!.languageCode];
 
   Future<void> init({required LocalizationSettings settings}) async {
     _settings = settings;
@@ -55,6 +56,7 @@ class LocalizationService {
   }
 
   Future<void> _readLocalization() async {
+    if (_settings == null) return;
     final localizationJson = _settings!.localisationJson ?? await rootBundle.loadString(_settings!.localisationFilePath!);
     final Map<String, dynamic> localizationMap = jsonDecode(localizationJson);
     _initLocalizationStringFromJsonMap(localizationMap);
@@ -123,6 +125,7 @@ class LocalizationService {
   LocalizedString? getLocalization(String key) => _localizationStrings[key];
 
   Future<String?> getLocalFile({required String id, required String languageCode}) async {
+    if (_settings == null) return null;
     final localFile = _settings!.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == languageCode);
     if (localFile == null) {
       print('flutter_localization: Local file with id: $id and langCode: $languageCode not found');
@@ -133,6 +136,7 @@ class LocalizationService {
   }
 
   Future<String?> getLocalizedLocalFile(String id) async {
+    if (_settings == null) return null;
     var localFile = _settings!.localFiles.firstWhereOrNull((file) => file.id == id && file.langCode == currentLanguageCode);
     if (localFile == null) {
       print('flutter_localization: Local file with id: $id not found for current language. Fallback to default language');
