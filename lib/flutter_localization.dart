@@ -1,6 +1,7 @@
 library flutter_localization;
 
 import 'package:flutter_localization/model/localization_settings.dart';
+import 'package:flutter_localization/model/localization_test_settings.dart';
 import 'package:flutter_localization/model/localized_string.dart';
 import 'package:flutter_localization/service/localization_service.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,13 @@ class FlutterLocalization {
   static Future<void> init(LocalizationSettings localizationSettings) async {
     _initCalled = true;
     await LocalizationService.instance.init(settings: localizationSettings);
+  }
+
+  @visibleForTesting
+  static Future<void> initForTesting(LocalizationTestSettings localizationTestSettings) async {
+    _initCalled = true;
+    // ignore: invalid_use_of_visible_for_testing_member
+    await LocalizationService.instance.initForTesting(settings: localizationTestSettings);
   }
 }
 
